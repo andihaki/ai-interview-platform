@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: rakamin-postgres
+    environment:
+      POSTGRES_DB: rakamin_development
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ""
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: rakamin-redis
+    ports:
+      - "6379:6379"
