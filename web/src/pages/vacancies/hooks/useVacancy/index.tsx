@@ -39,11 +39,6 @@ export default function useVacancy() {
       if (isEdit) {
         const { defaultValues } = rest.formState;
         const initial = defaultValues?.skills || [];
-        const initialOrderId = new Map(
-          initial
-            .filter((item): item is NonNullable<typeof item> => !!item)
-            .map((item, index) => [item.id, index]),
-        );
         const displayOrderId = new Map(
           data.skills.map((item, index) => [item.id, index]),
         );
