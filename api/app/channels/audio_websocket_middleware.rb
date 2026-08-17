@@ -419,6 +419,9 @@ class AudioWebSocketMiddleware
     message = JSON.parse(data)
 
     case message['type']
+    when 'bearer_auth'
+      # Handle Bearer token for candidate_id population
+      handle_bearer_auth_message(message, state)
     when 'debug_force_reconnect'
       if Rails.env.development?
         Rails.logger.warn("[AudioWS] DEBUG: forcing Gemini disconnect for session #{state.session&.id}")
@@ -438,6 +441,29 @@ class AudioWebSocketMiddleware
     end
   rescue JSON::ParserError
     # ignore malformed control messages
+  end
+
+  def handle_bearer_auth_message(message, state)
+    token = message['token']
+    return unless token.present?
+
+    begin
+      # Decode the JWT token to get user_id
+      payload = JsonWebToken.decode(token)
+      user_id = payload[:user_id]
+      return unless user_id.present?
+
+      # Update session with candidate_id from the user
+      session = state.session
+      return unless session
+
+      session.update_column(:candidate_id, user_id)
+      Rails.logger.info("[AudioWS] Updated session #{session.id} with candidate_id #{user_id} from bearer_auth message")
+    rescue ExceptionHandler::InvalidToken, ExceptionHandler::MissingToken => e
+      Rails.logger.warn("[AudioWS] Failed to decode bearer auth token: #{e.message}")
+    rescue => e
+      Rails.logger.error("[AudioWS] Error updating candidate_id from bearer auth message: #{e.message}")
+    end
   end
 
   # Schedules a proactive Gemini reconnect ~8.5min in, before Gemini's 10min hard limit triggers a 1011 close.
