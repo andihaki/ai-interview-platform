@@ -98,33 +98,32 @@ export default function AssessmentEditPage() {
       return;
     }
 
-    const initial = defaultValues?.skills || [];
-    const initialOrderId = new Map(
-      initial
-        .filter((item): item is NonNullable<typeof item> => !!item)
-        .map((item, index) => [item.id, index]),
-    );
-    const displayOrderId = new Map(
-      data.skills.map((item, index) => [item.id, index]),
-    );
-    const skills = [
-      ...initial.map((item) => ({
-        ...item,
-        _destroy: !displayOrderId.has(item?.id),
-        display_order: displayOrderId.get(item?.id),
-      })),
-      ...data.skills
-        .filter((item) => !initialOrderId.has(item.id))
-        .map((item) => ({
-          ...item,
-          _destroy: false,
-          display_order: initialOrderId.get(item?.id) ?? 0,
-        })),
-    ];
-
     setError(null);
     setSubmitting(true);
     try {
+      const initial = defaultValues?.skills || [];
+      const initialOrderId = new Map(
+        initial
+          .filter((item): item is NonNullable<typeof item> => !!item)
+          .map((item, index) => [item.id, index]),
+      );
+      const displayOrderId = new Map(
+        data.skills.map((item, index) => [item.id, index]),
+      );
+      const skills = [
+        ...initial.map((item) => ({
+          ...item,
+          _destroy: !displayOrderId.has(item?.id),
+          display_order: displayOrderId.get(item?.id),
+        })),
+        ...data.skills
+          .filter((item) => !initialOrderId.has(item.id))
+          .map((item) => ({
+            ...item,
+            _destroy: false,
+            display_order: initialOrderId.get(item?.id) ?? 0,
+          })),
+      ];
       await assessmentsApi.update(Number(id), {
         name: data.name,
         time_limit_min: data.time_limit_min,

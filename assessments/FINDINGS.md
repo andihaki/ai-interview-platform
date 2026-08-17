@@ -5,7 +5,7 @@
 **Solutions:**
 add `before_validation` to populate `skill_id` from `skill_taxonomy.skill_label`
 
-## P0 - API and Web - fail removing skill to assess
+## P0 - API and Web - fail removing skill to assess at assessments and vacancies page
 
 **Issue:** when admin edit assessment by removing existing skill and adding new skill. then current assessment has two skill two assess, expecting old / existing skill removed.
 
@@ -15,7 +15,7 @@ I prefer option 1, because decentralize the lookup load into client side:
 1. mark existing skill as delete, along with new skill
 2. lookup into table, if skill sent by client isn't available then insert, if available at db only then delete it
 
-## P3 - Web - assessment edit
+## P3 - Web - assessment edit and vacancy new edit
 
 **Issue:** Save Changes without Role title not showing error message
 
@@ -38,3 +38,12 @@ Signup page is available under /web/src/pages/auth/SignupPage. Need to:
 
 1. Add `/signup` into App.tsx
 2. Implement backend
+
+# TODO
+
+## P3 - Web - Edit and Add shared component
+
+**Issue:** Edit add Add has idential UI but have two separate component
+
+**Solutions:**
+Combine into AddEdit component, and separate the logic by adding either `isEdit` or `isAdd`
