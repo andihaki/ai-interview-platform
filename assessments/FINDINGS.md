@@ -15,6 +15,13 @@ I prefer option 1, because decentralize the lookup load into client side:
 1. mark existing skill as delete, along with new skill
 2. lookup into table, if skill sent by client isn't available then insert, if available at db only then delete it
 
+## P0 - API and Web - after interview session candidate_id is missing
+
+**Issue:** candidate open assessment interview invitation but after session end candidate_id isn't recorded in table sessions. Neither Manual End by Candidate or Finish interview session candidate_id still null.
+
+**Solutions:**
+web sent token using websocket message and decode at api side
+
 ## P3 - Web - assessment and vacancy duplicate logic
 
 **Issue:** assessment and vacancy duplicate logic between new and edit page
