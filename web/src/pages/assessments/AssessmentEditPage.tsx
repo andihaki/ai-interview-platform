@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useState } from "react";
+import { useFieldArray } from "react-hook-form";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import {
   DndContext,
@@ -15,6 +15,8 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { ArrowLeft, Plus, Loader2 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,52 +31,28 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import SkillCard from "@/components/assessment/SkillCard";
 import SkillPicker from "@/components/assessment/SkillPicker";
-import { ArrowLeft, Plus, Loader2 } from "lucide-react";
-import { assessmentsApi } from "@/services/assessments";
+
 import { TIME_LIMIT_OPTIONS } from "@/utils/constants";
-import type { AssessmentSkill } from "@/types";
-import type { AssessmentFormValues } from "./AssessmentNewPage";
+import useAssessment from "./hooks/useAssessment";
 
 export default function AssessmentEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  // @todo: with TanStack query then loading, submitting and error will auto
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const form = useForm<AssessmentFormValues>({
-    defaultValues: { name: "", time_limit_min: 45, skills: [] },
-  });
-
+  const { loading, errorResponse, onSubmit, ...form } = useAssessment();
   const {
     register,
     handleSubmit,
     control,
     setValue,
-    reset,
-    formState: { errors, defaultValues },
+    formState: { errors },
+    submitting,
   } = form;
   const { fields, append, remove, move } = useFieldArray({
     control,
     name: "skills",
   });
-
-  useEffect(() => {
-    assessmentsApi
-      .get(Number(id))
-      .then((res) => {
-        const a = res.data.assessment;
-        reset({
-          name: a.name,
-          time_limit_min: a.time_limit_min,
-          skills: a.skills,
-        });
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [id, reset]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -89,51 +67,6 @@ export default function AssessmentEditPage() {
       const oldIndex = fields.findIndex((f) => f.id === active.id);
       const newIndex = fields.findIndex((f) => f.id === over.id);
       move(oldIndex, newIndex);
-    }
-  };
-
-  const onSubmit = async (data: AssessmentFormValues) => {
-    if (data.skills.length === 0) {
-      setError("Add at least one skill.");
-      return;
-    }
-
-    setError(null);
-    setSubmitting(true);
-    try {
-      const initial = defaultValues?.skills || [];
-      const initialOrderId = new Map(
-        initial
-          .filter((item): item is NonNullable<typeof item> => !!item)
-          .map((item, index) => [item.id, index]),
-      );
-      const displayOrderId = new Map(
-        data.skills.map((item, index) => [item.id, index]),
-      );
-      const skills = [
-        ...initial.map((item) => ({
-          ...item,
-          _destroy: !displayOrderId.has(item?.id),
-          display_order: displayOrderId.get(item?.id),
-        })),
-        ...data.skills
-          .filter((item) => !initialOrderId.has(item.id))
-          .map((item) => ({
-            ...item,
-            _destroy: false,
-            display_order: initialOrderId.get(item?.id) ?? 0,
-          })),
-      ];
-      await assessmentsApi.update(Number(id), {
-        name: data.name,
-        time_limit_min: data.time_limit_min,
-        assessment_skills_attributes: skills,
-      });
-      navigate(`/assessments/${id}/invite`);
-    } catch (e: any) {
-      setError(e?.response?.data?.errors?.[0]?.message ?? "Failed to save.");
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -229,6 +162,11 @@ export default function AssessmentEditPage() {
               </SortableContext>
             </DndContext>
           )}
+
+          {errors.skills && (
+            <p className="text-xs text-destructive">{errors.skills.message}</p>
+          )}
+
           <div className="flex gap-2">
             <Button
               type="button"
@@ -257,7 +195,9 @@ export default function AssessmentEditPage() {
         </div>
 
         <Separator />
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {errorResponse && (
+          <p className="text-sm text-destructive">{errorResponse}</p>
+        )}
 
         <div className="flex justify-end gap-2">
           <Button
