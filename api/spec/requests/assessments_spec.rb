@@ -93,6 +93,7 @@ RSpec.describe "Assessments API", type: :request do
         expect(assessment.assessment_skills.count).to eq(1)
         skill = assessment.assessment_skills.first
         expect(skill.skill_label).to eq("React / Frontend Development Core")
+        expect(skill.skill_id).to eq("SK-ENG-001")
         expect(skill.is_custom).to be_falsey
         expect(skill.expected_level).to eq(2)
         expect(skill.display_order).to eq(0)
@@ -173,27 +174,27 @@ RSpec.describe "Assessments API", type: :request do
             language: "en",
             assessment_skills_attributes: [
               {
-                skill_label: "Backend Development",
+                skill_label: "Node.js / Backend Development",
                 is_custom: false,
                 expected_level: 3,
-                scope_include: "API design, database modeling, performance",
-                l1_anchor: "Basic understanding of server-side programming",
-                l2_anchor: "Builds and deploys APIs independently",
-                l3_anchor: "Designs scalable backend architectures",
-                l4_anchor: "Sets backend standards for team",
-                l5_anchor: "Defines org-wide backend strategy",
+                scope_include: "REST API design, Express/Fastify, async patterns, middleware, error handling, background jobs",
+                l1_anchor: "Implements endpoints from spec with guidance. Understands request/response cycle and basic async (async/await).",
+                l2_anchor: "Builds CRUD APIs independently. Handles validation, error middleware, and basic auth patterns.",
+                l3_anchor: "Designs service boundaries and data flow. Implements background jobs, caching strategies, and structured logging.",
+                l4_anchor: "Defines API standards across services. Leads decisions on runtime patterns, observability, and service resilience.",
+                l5_anchor: "Owns backend platform strategy. Drives decisions on runtime selection, distributed system patterns, and org-wide reliability targets.",
                 display_order: 0
               },
               {
-                skill_label: "Database Design",
+                skill_label: "Database Design & SQL",
                 is_custom: false,
                 expected_level: 2,
-                scope_include: "Relational design, indexing, query optimization",
-                l1_anchor: "Understands basic SQL concepts",
-                l2_anchor: "Writes efficient queries and basic schema design",
-                l3_anchor: "Optimizes complex database operations",
-                l4_anchor: "Establishes database standards",
-                l5_anchor: "Architects data platforms across teams",
+                scope_include: "Schema design, normalization, indexing, query optimization, migrations, transactions, PostgreSQL/MySQL",
+                l1_anchor: "Writes basic SELECT queries. Understands tables, columns, and primary keys.",
+                l2_anchor: "Writes JOINs and aggregations. Designs simple schemas with foreign keys. Runs migrations safely.",
+                l3_anchor: "Optimizes slow queries (EXPLAIN, indexing). Designs schemas for performance and correctness. Handles transactions and locking.",
+                l4_anchor: "Defines DB standards for the team. Reviews schema changes for production impact. Leads partitioning and replication decisions.",
+                l5_anchor: "Owns database strategy at org level. Evaluates DB technology choices, sets reliability and scaling targets, guides DBA practice.",
                 display_order: 1
               }
             ]
@@ -206,6 +207,13 @@ RSpec.describe "Assessments API", type: :request do
         assessment = Assessment.last
         expect(response).to have_http_status(:created)
         expect(assessment.assessment_skills.count).to eq(2)
+        
+        # Verify skill_ids are correctly looked up
+        backend_skill = assessment.assessment_skills.find_by(skill_label: "Node.js / Backend Development")
+        expect(backend_skill.skill_id).to eq("SK-ENG-002")
+        
+        db_skill = assessment.assessment_skills.find_by(skill_label: "Database Design & SQL")
+        expect(db_skill.skill_id).to eq("SK-ENG-004")
       end
     end
 
