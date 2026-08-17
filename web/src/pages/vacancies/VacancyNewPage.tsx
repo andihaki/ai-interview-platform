@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useFieldArray } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, Plus, X, Loader2 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,22 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import LevelRadio from "@/components/assessment/LevelRadio";
 import SkillPicker from "@/components/assessment/SkillPicker";
-import { vacanciesApi } from "@/services/vacancies";
-import { ArrowLeft, Plus, X, Loader2 } from "lucide-react";
-import type { VacancySkill } from "@/types";
-
-interface VacancyFormValues {
-  role_title: string;
-  culture_dimensions: string;
-  competency_expectations: string;
-  skills: Partial<VacancySkill>[];
-}
+import useVacancy from "./hooks/useVacancy";
 
 export default function VacancyNewPage() {
   const navigate = useNavigate();
-  const [submitting, setSubmitting] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [errorResponse, setErrorResponse] = useState<string | null>(null);
 
   const {
     register,
@@ -32,46 +23,13 @@ export default function VacancyNewPage() {
     setValue,
     watch,
     formState: { errors },
-    setError,
     clearErrors,
-  } = useForm<VacancyFormValues>({
-    defaultValues: {
-      role_title: "",
-      culture_dimensions: "",
-      competency_expectations: "",
-      skills: [],
-    },
-  });
+    onSubmit,
+    submitting,
+    errorResponse,
+  } = useVacancy();
 
   const { fields, append, remove } = useFieldArray({ control, name: "skills" });
-
-  const onSubmit = async (data: VacancyFormValues) => {
-    if (data.skills.length === 0) {
-      setError("skills", {
-        type: "manual",
-        message: "At least one expected skill is required",
-      });
-      return;
-    }
-
-    clearErrors("skills");
-    setSubmitting(true);
-    try {
-      await vacanciesApi.create({
-        role_title: data.role_title,
-        culture_dimensions: data.culture_dimensions,
-        competency_expectations: data.competency_expectations,
-        vacancy_skills_attributes: data.skills,
-      });
-      navigate("/vacancies");
-    } catch (e: any) {
-      setErrorResponse(
-        e?.response?.data?.errors?.[0]?.message ?? "Failed to save vacancy.",
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -108,7 +66,9 @@ export default function VacancyNewPage() {
 
         {/* Expected skills */}
         <div className="space-y-3">
-          <Label>Expected skills</Label>
+          <Label>
+            Expected skills <span className="text-destructive">*</span>
+          </Label>
 
           {fields.length === 0 ? (
             <div className="border rounded-lg p-4 text-center text-sm text-muted-foreground">
@@ -146,8 +106,8 @@ export default function VacancyNewPage() {
             </div>
           )}
 
-          {errorResponse && (
-            <p className="text-sm text-destructive">{errorResponse}</p>
+          {errors.skills && (
+            <p className="text-xs text-destructive">{errors.skills.message}</p>
           )}
 
           <Button
@@ -200,6 +160,10 @@ export default function VacancyNewPage() {
           )}
         </div>
 
+        {errorResponse && (
+          <p className="text-sm text-destructive">{errorResponse}</p>
+        )}
+
         <div className="flex justify-end gap-2">
           <Button
             type="button"
@@ -218,13 +182,14 @@ export default function VacancyNewPage() {
       <SkillPicker
         open={pickerOpen}
         onOpenChange={setPickerOpen}
-        onSelect={(s) =>
+        onSelect={(s) => {
           append({
             skill_id: s.skill_id,
             skill_label: s.skill_label,
             expected_level: 3,
-          })
-        }
+          });
+          clearErrors("skills");
+        }}
       />
     </div>
   );

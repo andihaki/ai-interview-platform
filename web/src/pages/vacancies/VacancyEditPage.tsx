@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useState } from "react";
+import { useFieldArray } from "react-hook-form";
+import { useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, Plus, X, Loader2 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,22 +11,10 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import LevelRadio from "@/components/assessment/LevelRadio";
 import SkillPicker from "@/components/assessment/SkillPicker";
-import { vacanciesApi } from "@/services/vacancies";
-import { ArrowLeft, Plus, X, Loader2 } from "lucide-react";
-import type { VacancySkill } from "@/types";
-
-interface VacancyFormValues {
-  role_title: string;
-  culture_dimensions: string;
-  competency_expectations: string;
-  skills: Partial<VacancySkill>[];
-}
+import useVacancy from "./hooks/useVacancy";
 
 export default function VacancyEditPage() {
-  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const {
@@ -33,83 +23,14 @@ export default function VacancyEditPage() {
     control,
     setValue,
     watch,
-    reset,
-    formState,
-    setError,
+    formState: { errors },
     clearErrors,
-  } = useForm<VacancyFormValues>({
-    defaultValues: {
-      role_title: "",
-      culture_dimensions: "",
-      competency_expectations: "",
-      skills: [],
-    },
-  });
-  const { errors, defaultValues } = formState;
+    onSubmit,
+    submitting,
+    errorResponse,
+    loading,
+  } = useVacancy();
   const { fields, append, remove } = useFieldArray({ control, name: "skills" });
-
-  useEffect(() => {
-    vacanciesApi
-      .get(Number(id))
-      .then((res) => {
-        const v = res.data.vacancy;
-        reset({
-          role_title: v.role_title,
-          culture_dimensions: v.culture_dimensions,
-          competency_expectations: v.competency_expectations,
-          skills: v.skills,
-        });
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [id, reset]);
-
-  const onSubmit = async (data: VacancyFormValues) => {
-    if (data.skills.length === 0) {
-      setError("skills", {
-        type: "manual",
-        message: "At least one expected skill is required",
-      });
-      return;
-    }
-    clearErrors("skills");
-    setSubmitting(true);
-    try {
-      const initial = defaultValues?.skills || [];
-      const initialOrderId = new Map(
-        initial
-          .filter((item): item is NonNullable<typeof item> => !!item)
-          .map((item, index) => [item.id, index]),
-      );
-      const displayOrderId = new Map(
-        data.skills.map((item, index) => [item.id, index]),
-      );
-      const skills = [
-        ...initial.map((item) => ({
-          ...item,
-          _destroy: !displayOrderId.has(item?.id),
-          display_order: displayOrderId.get(item?.id),
-        })),
-        ...data.skills
-          .filter((item) => !initialOrderId.has(item.id))
-          .map((item) => ({
-            ...item,
-            _destroy: false,
-            display_order: initialOrderId.get(item?.id) ?? 0,
-          })),
-      ];
-
-      await vacanciesApi.update(Number(id), {
-        role_title: data.role_title,
-        culture_dimensions: data.culture_dimensions,
-        competency_expectations: data.competency_expectations,
-        vacancy_skills_attributes: skills,
-      });
-      navigate("/vacancies");
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   if (loading)
     return (
@@ -221,6 +142,11 @@ export default function VacancyEditPage() {
             </p>
           )}
         </div>
+
+        {errorResponse && (
+          <p className="text-sm text-destructive">{errorResponse}</p>
+        )}
+
         <div className="flex justify-end gap-2">
           <Button
             type="button"
