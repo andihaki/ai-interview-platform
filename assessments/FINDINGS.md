@@ -5,6 +5,23 @@
 **Solutions:**
 add `before_validation` to populate `skill_id` from `skill_taxonomy.skill_label`
 
+## P0 - API and Web - fail removing skill to assess
+
+**Issue:** when admin edit assessment by removing existing skill and adding new skill. then current assessment has two skill two assess, expecting old / existing skill removed.
+
+**Solutions:**
+I prefer option 1, because decentralize the lookup load into client side:
+
+1. mark existing skill as delete, along with new skill
+2. lookup into table, if skill sent by client isn't available then insert, if available at db only then delete it
+
+## P3 - Web - assessment edit
+
+**Issue:** Save Changes without Role title not showing error message
+
+**Solutions:**
+`register('name'` add show `error.name` message
+
 ## P3 - API - Create new admin and user on seed process
 
 **Issue:** at seeds.rb mentioning "After seeding, use the Rails console to mint a JWT for testing:" but there's no insert or User.create.

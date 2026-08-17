@@ -18,7 +18,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import SkillCard from "@/components/assessment/SkillCard";
@@ -32,6 +38,7 @@ import type { AssessmentFormValues } from "./AssessmentNewPage";
 export default function AssessmentEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  // @todo: with TanStack query then loading, submitting and error will auto
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -41,15 +48,29 @@ export default function AssessmentEditPage() {
     defaultValues: { name: "", time_limit_min: 45, skills: [] },
   });
 
-  const { register, handleSubmit, control, setValue, reset, formState: { errors } } = form;
-  const { fields, append, remove, move } = useFieldArray({ control, name: "skills" });
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    reset,
+    formState: { errors, defaultValues },
+  } = form;
+  const { fields, append, remove, move } = useFieldArray({
+    control,
+    name: "skills",
+  });
 
   useEffect(() => {
     assessmentsApi
       .get(Number(id))
       .then((res) => {
         const a = res.data.assessment;
-        reset({ name: a.name, time_limit_min: a.time_limit_min, skills: a.skills });
+        reset({
+          name: a.name,
+          time_limit_min: a.time_limit_min,
+          skills: a.skills,
+        });
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -57,7 +78,9 @@ export default function AssessmentEditPage() {
 
   const sensors = useSensors(
     useSensor(PointerSensor),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -70,14 +93,42 @@ export default function AssessmentEditPage() {
   };
 
   const onSubmit = async (data: AssessmentFormValues) => {
-    if (data.skills.length === 0) { setError("Add at least one skill."); return; }
+    if (data.skills.length === 0) {
+      setError("Add at least one skill.");
+      return;
+    }
+
+    const initial = defaultValues?.skills || [];
+    const initialOrderId = new Map(
+      initial
+        .filter((item): item is NonNullable<typeof item> => !!item)
+        .map((item, index) => [item.id, index]),
+    );
+    const displayOrderId = new Map(
+      data.skills.map((item, index) => [item.id, index]),
+    );
+    const skills = [
+      ...initial.map((item) => ({
+        ...item,
+        _destroy: !displayOrderId.has(item?.id),
+        display_order: displayOrderId.get(item?.id),
+      })),
+      ...data.skills
+        .filter((item) => !initialOrderId.has(item.id))
+        .map((item) => ({
+          ...item,
+          _destroy: false,
+          display_order: initialOrderId.get(item?.id) ?? 0,
+        })),
+    ];
+
     setError(null);
     setSubmitting(true);
     try {
       await assessmentsApi.update(Number(id), {
         name: data.name,
         time_limit_min: data.time_limit_min,
-        assessment_skills_attributes: data.skills.map((s, i) => ({ ...s, display_order: i })),
+        assessment_skills_attributes: skills,
       });
       navigate(`/assessments/${id}/invite`);
     } catch (e: any) {
@@ -101,7 +152,10 @@ export default function AssessmentEditPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center gap-2 mb-6">
-        <Link to="/assessments" className="text-muted-foreground hover:text-foreground">
+        <Link
+          to="/assessments"
+          className="text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <span className="text-sm text-muted-foreground">Back</span>
@@ -111,20 +165,34 @@ export default function AssessmentEditPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-1.5">
-          <Label htmlFor="name">Role title <span className="text-destructive">*</span></Label>
-          <Input id="name" {...register("name", { required: true })} />
+          <Label htmlFor="name">
+            Role title <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="name"
+            {...register("name", { required: "Role title is required" })}
+          />
+          {errors.name && (
+            <p className="text-xs text-destructive">{errors.name.message}</p>
+          )}
         </div>
 
         <div className="space-y-1.5">
-          <Label>Session time limit <span className="text-destructive">*</span></Label>
+          <Label>
+            Session time limit <span className="text-destructive">*</span>
+          </Label>
           <Select
             value={String(form.watch("time_limit_min"))}
             onValueChange={(v) => setValue("time_limit_min", Number(v))}
           >
-            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               {TIME_LIMIT_OPTIONS.map((min) => (
-                <SelectItem key={min} value={String(min)}>{min} min</SelectItem>
+                <SelectItem key={min} value={String(min)}>
+                  {min} min
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -139,21 +207,51 @@ export default function AssessmentEditPage() {
               No skills added yet.
             </div>
           ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={fields.map((f) => f.id)}
+                strategy={verticalListSortingStrategy}
+              >
                 <div className="space-y-2">
                   {fields.map((field, index) => (
-                    <SkillCard key={field.id} id={field.id} index={index} form={form} onRemove={() => remove(index)} />
+                    <SkillCard
+                      key={field.id}
+                      id={field.id}
+                      index={index}
+                      form={form}
+                      onRemove={() => remove(index)}
+                    />
                   ))}
                 </div>
               </SortableContext>
             </DndContext>
           )}
           <div className="flex gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setPickerOpen(true)}
+            >
               <Plus className="h-3.5 w-3.5 mr-1" /> Add from B7 taxonomy
             </Button>
-            <Button type="button" variant="outline" size="sm" onClick={() => append({ skill_label: "", is_custom: true, expected_level: 3, display_order: fields.length })}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                append({
+                  skill_label: "",
+                  is_custom: true,
+                  expected_level: 3,
+                  display_order: fields.length,
+                })
+              }
+            >
               <Plus className="h-3.5 w-3.5 mr-1" /> Add custom skill
             </Button>
           </div>
@@ -163,7 +261,13 @@ export default function AssessmentEditPage() {
         {error && <p className="text-sm text-destructive">{error}</p>}
 
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={() => navigate(`/assessments/${id}/invite`)}>Cancel</Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate(`/assessments/${id}/invite`)}
+          >
+            Cancel
+          </Button>
           <Button type="submit" disabled={submitting}>
             {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Save Changes
@@ -171,7 +275,11 @@ export default function AssessmentEditPage() {
         </div>
       </form>
 
-      <SkillPicker open={pickerOpen} onOpenChange={setPickerOpen} onSelect={(s) => append({ ...s, display_order: fields.length })} />
+      <SkillPicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onSelect={(s) => append({ ...s, display_order: fields.length })}
+      />
     </div>
   );
 }
