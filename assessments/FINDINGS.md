@@ -1,4 +1,4 @@
-## P0 - API - skill_id is empty when adding assignment
+## P0 - API - skill_id is empty when adding assignment and vacancy
 
 **Issue:** at assessment_skill.rb `skill_id` is not populated.
 
