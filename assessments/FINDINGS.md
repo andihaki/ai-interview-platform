@@ -15,6 +15,13 @@ I prefer option 1, because decentralize the lookup load into client side:
 1. mark existing skill as delete, along with new skill
 2. lookup into table, if skill sent by client isn't available then insert, if available at db only then delete it
 
+## P3 - Web - assessment and vacancy duplicate logic
+
+**Issue:** assessment and vacancy duplicate logic between new and edit page
+
+**Solutions:**
+add reusable hooks useAssessment and useVacancy
+
 ## P3 - Web - assessment edit and vacancy new edit
 
 **Issue:** Save Changes without Role title not showing error message
