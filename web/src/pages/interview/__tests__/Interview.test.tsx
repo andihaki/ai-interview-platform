@@ -77,6 +77,9 @@ describe("Interview Page", () => {
     expect(
       await screen.findByText(MOCK_CANDIDATE.role_title),
     ).toBeInTheDocument();
+    const inputEmail = await screen.findByLabelText(/email/i);
+    await userEvent.type(inputEmail, "user@example.com");
+    expect(inputEmail).toHaveValue("user@example.com");
 
     await waitFor(
       () => {

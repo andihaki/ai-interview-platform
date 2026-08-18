@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSetAtom } from "jotai";
+import { Loader2 } from "lucide-react";
+
 import { authAtom, saveToken } from "@/stores/authAtom";
 import { authApi } from "@/services/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import decodeToken from "@/utils/decodeToken";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -24,8 +26,7 @@ export default function LoginPage() {
       const res = await authApi.login({ email, password });
       const token = res.data.token;
       saveToken(token);
-      const decoded = JSON.parse(atob(token.split(".")[1]));
-      const role = decoded.role;
+      const { role } = decodeToken(token);
       setAuth({ token });
       if (role === "admin") {
         navigate("/assessments");

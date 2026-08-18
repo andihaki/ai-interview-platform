@@ -3,7 +3,9 @@
 **Issue:** at assessment_skill.rb `skill_id` is not populated.
 
 **Solutions:**
-add `before_validation` to populate `skill_id` from `skill_taxonomy.skill_label`
+
+1. add `before_validation` to populate `skill_id` from `skill_taxonomy.skill_label`, also
+2. add email input form on interview page
 
 ## P0 - API and Web - fail removing skill to assess at assessments and vacancies page
 
@@ -55,7 +57,16 @@ Signup page is available under /web/src/pages/auth/SignupPage. Need to:
 
 # TODO
 
+## P0 - Data - ai_interview table is magically gone
+
 ## P0 - Security - Password sent as plain text
+
+## P2 - Web - unmuteRef seems unnecessary
+
+**Solutions:**
+use muteRef instead
+
+## P2 - Web - SignupPage better use react-hook-form for handle email and password
 
 ## P3 - Web - Edit and Add shared component
 
