@@ -41,7 +41,9 @@ export default function InterviewPage() {
     null,
   );
   const [sessionId, setSessionId] = useState<number | null>(null);
-  const [interviewState, setInterviewState] = useState<InterviewState>("idle");
+  const [interviewState, setInterviewState] = useState<InterviewState | null>(
+    null,
+  );
   const [speaker, setSpeaker] = useState<InterviewSpeaker>(null);
   const [transcript, setTranscript] = useState<
     Pick<TranscriptTurn, "speaker" | "text">[]
@@ -57,6 +59,8 @@ export default function InterviewPage() {
   );
   const [micMuted, setMicMuted] = useState(false);
   const micMutedRef = useRef(false);
+  const [isStale, setIsStale] = useState(false);
+  const [error, setError] = useState(false);
 
   const { formState, register, handleSubmit, watch } = useForm<{
     email: string;
@@ -76,9 +80,10 @@ export default function InterviewPage() {
       .then((res) => {
         setCandidateInfo(res.data);
         setSessionId(res.data.session_id);
+        setInterviewState("idle");
         if (res.data.session_status === "ended") setInterviewState("complete");
       })
-      .catch(() => setInterviewState("complete"));
+      .catch(() => setError(true));
   }, [token]);
 
   const muteRef = useRef<(() => void) | null>(null);
@@ -126,6 +131,7 @@ export default function InterviewPage() {
 
   const handleTranscript = useCallback(
     (turn: Pick<TranscriptTurn, "speaker" | "text">) => {
+      setIsStale(false);
       setTranscript((prev) => [...prev.slice(-9), turn]); // keep last 10
     },
     [],
@@ -166,6 +172,7 @@ export default function InterviewPage() {
   const handleSpeakerChange = useCallback(
     (newSpeaker: InterviewSpeaker) => {
       if (newSpeaker === "ai") {
+        setIsStale(true);
         setSpeaker("ai");
         muteRef.current?.();
       } else if (newSpeaker === "candidate") {
@@ -247,6 +254,23 @@ export default function InterviewPage() {
       : connectionState === "connected"
         ? "connected"
         : "reconnecting";
+
+  // ── Error state ─────────────────────────────────────────────────────────
+  if (error) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-16 text-center space-y-4">
+        <div className="text-4xl">⚠️</div>
+        <h2 className="text-xl font-semibold">Interview Not Found</h2>
+        <p className="text-sm text-muted-foreground">
+          The interview link is invalid or has expired.
+          <br />
+          Please contact the hiring team for a new link.
+        </p>
+      </div>
+    );
+  }
+
+  if (!interviewState) return null;
 
   // ── State A: Pre-start ──────────────────────────────────────────────────
   if (interviewState === "idle") {
@@ -402,19 +426,20 @@ export default function InterviewPage() {
           </div>
         ) : (
           <>
-            <VoiceBars
-              active={aiSpeaking}
-              label={aiSpeaking ? "AI speaking" : "Listening..."}
-              variant="ai"
-            />
-
-            {candidateSpeaking && (
+            <div className="flex gap-2">
               <VoiceBars
-                active={true}
-                label="You're speaking"
-                variant="candidate"
+                active={aiSpeaking}
+                label={aiSpeaking ? "AI speaking" : "Listening..."}
+                variant="ai"
               />
-            )}
+              {candidateSpeaking && (
+                <VoiceBars
+                  active={true}
+                  label="You're speaking"
+                  variant="candidate"
+                />
+              )}
+            </div>
 
             {/* Transcript */}
             {transcript.length > 0 && (
@@ -426,6 +451,26 @@ export default function InterviewPage() {
                     text={turn.text}
                   />
                 ))}
+              </div>
+            )}
+
+            {candidateSpeaking && (
+              <div className="w-full">
+                <TranscriptBubble
+                  speaker={speaker}
+                  text="You're speaking..."
+                  isLive={true}
+                />
+              </div>
+            )}
+
+            {/* 
+              transcript sent by bulk, need show intermediary loading indicator. 
+              @todo: work in progress to sent chat in chunk, but result isn't good enough 
+            */}
+            {aiSpeaking && transcript.length !== 0 && isStale && (
+              <div className="w-full rounded-lg px-3 py-4 text-sm bg-muted text-foreground animate-pulse border-2 border-primary/30">
+                <span className="ml-1 animate-pulse">● ● ●</span>
               </div>
             )}
           </>

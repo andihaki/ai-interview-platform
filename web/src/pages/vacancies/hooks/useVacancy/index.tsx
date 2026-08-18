@@ -23,6 +23,8 @@ export default function useVacancy() {
       },
     });
 
+  const hasUnsavedChanges = Object.keys(rest.formState.dirtyFields).length > 0;
+
   const onSubmit = async (data: VacancyFormValues) => {
     if (data.skills.length === 0) {
       setError("skills", {
@@ -107,5 +109,6 @@ export default function useVacancy() {
     clearErrors,
     control,
     loading,
+    hasUnsavedChanges,
   };
 }

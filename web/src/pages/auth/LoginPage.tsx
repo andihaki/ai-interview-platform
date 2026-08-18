@@ -31,7 +31,6 @@ export default function LoginPage() {
       if (role === "admin") {
         navigate("/assessments");
       } else {
-        // @todo: auto redirection into invite token for better UX
         navigate("/interview");
       }
     } catch {

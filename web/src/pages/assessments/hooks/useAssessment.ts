@@ -20,7 +20,7 @@ export default function useAssessment() {
   const [errorResponse, setErrorResponse] = useState<string | null>(null);
   const isEdit = Boolean(id);
 
-  const { ...rest } = useForm<AssessmentFormValues>({
+  const form = useForm<AssessmentFormValues>({
     defaultValues: {
       name: "",
       time_limit_min: 45,
@@ -29,8 +29,10 @@ export default function useAssessment() {
     },
   });
 
+  const hasUnsavedChanges = Object.keys(form.formState.dirtyFields).length > 0;
+
   const onSubmit = async (data: AssessmentFormValues) => {
-    const { setError, clearErrors } = rest;
+    const { setError, clearErrors } = form;
     if (data.skills.length === 0) {
       setError("skills", {
         type: "manual",
@@ -43,7 +45,7 @@ export default function useAssessment() {
     try {
       let skills = data.skills;
       if (isEdit) {
-        const { defaultValues } = rest.formState;
+        const { defaultValues } = form.formState;
         const initial = defaultValues?.skills || [];
         const displayOrderId = new Map(
           data.skills.map((item, index) => [item.id, index]),
@@ -91,7 +93,7 @@ export default function useAssessment() {
       .get(Number(id))
       .then((res) => {
         const a = res.data.assessment;
-        rest.reset({
+        form.reset({
           name: a.name,
           time_limit_min: a.time_limit_min,
           skills: a.skills,
@@ -99,13 +101,14 @@ export default function useAssessment() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [id, rest.reset, isEdit]);
+  }, [id, form.reset, isEdit]);
 
   return {
-    ...rest,
+    ...form,
     onSubmit,
     submitting,
     errorResponse,
     loading,
+    hasUnsavedChanges,
   };
 }

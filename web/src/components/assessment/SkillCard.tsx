@@ -3,12 +3,11 @@ import { UseFormReturn, useWatch } from "react-hook-form";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, X, ChevronDown, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
+import { cn } from "@/lib/utils";
+import { AssessmentFormValues } from "@/pages/assessments/hooks/useAssessment";
 import LevelRadio from "./LevelRadio";
 import CustomSkillForm from "./CustomSkillForm";
-import { cn } from "@/lib/utils";
-import type { AssessmentFormValues } from "@/pages/assessments/AssessmentNewPage";
-
 interface SkillCardProps {
   index: number;
   id: string;
