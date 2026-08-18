@@ -466,7 +466,7 @@ export default function InterviewPage() {
 
             {/* 
               transcript sent by bulk, need show intermediary loading indicator. 
-              work in progress to sent chat in chunk, but result isn't good enough 
+              @todo: work in progress to sent chat in chunk, but result isn't good enough 
             */}
             {aiSpeaking && transcript.length !== 0 && isStale && (
               <div className="w-full rounded-lg px-3 py-4 text-sm bg-muted text-foreground animate-pulse border-2 border-primary/30">
