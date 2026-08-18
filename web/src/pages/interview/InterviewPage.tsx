@@ -41,7 +41,9 @@ export default function InterviewPage() {
     null,
   );
   const [sessionId, setSessionId] = useState<number | null>(null);
-  const [interviewState, setInterviewState] = useState<InterviewState>("idle");
+  const [interviewState, setInterviewState] = useState<InterviewState | null>(
+    null,
+  );
   const [speaker, setSpeaker] = useState<InterviewSpeaker>(null);
   const [transcript, setTranscript] = useState<
     Pick<TranscriptTurn, "speaker" | "text">[]
@@ -58,6 +60,7 @@ export default function InterviewPage() {
   const [micMuted, setMicMuted] = useState(false);
   const micMutedRef = useRef(false);
   const [isStale, setIsStale] = useState(false);
+  const [error, setError] = useState(false);
 
   const { formState, register, handleSubmit, watch } = useForm<{
     email: string;
@@ -77,9 +80,10 @@ export default function InterviewPage() {
       .then((res) => {
         setCandidateInfo(res.data);
         setSessionId(res.data.session_id);
+        setInterviewState("idle");
         if (res.data.session_status === "ended") setInterviewState("complete");
       })
-      .catch(() => setInterviewState("complete"));
+      .catch(() => setError(true));
   }, [token]);
 
   const muteRef = useRef<(() => void) | null>(null);
@@ -250,6 +254,23 @@ export default function InterviewPage() {
       : connectionState === "connected"
         ? "connected"
         : "reconnecting";
+
+  // ── Error state ─────────────────────────────────────────────────────────
+  if (error) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-16 text-center space-y-4">
+        <div className="text-4xl">⚠️</div>
+        <h2 className="text-xl font-semibold">Interview Not Found</h2>
+        <p className="text-sm text-muted-foreground">
+          The interview link is invalid or has expired.
+          <br />
+          Please contact the hiring team for a new link.
+        </p>
+      </div>
+    );
+  }
+
+  if (!interviewState) return null;
 
   // ── State A: Pre-start ──────────────────────────────────────────────────
   if (interviewState === "idle") {

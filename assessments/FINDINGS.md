@@ -17,6 +17,13 @@ I prefer option 1, because decentralize the lookup load into client side:
 1. mark existing skill as delete, along with new skill
 2. lookup into table, if skill sent by client isn't available then insert, if available at db only then delete it
 
+## P0 - API and Web - Signup page unavailable
+
+Signup page is available under /web/src/pages/auth/SignupPage. Need to:
+
+1. Add `/signup` into App.tsx
+2. Implement backend
+
 ## P0 - API and Web - after interview session candidate_id is missing
 
 **Issue:** candidate open assessment interview invitation but after session end candidate_id isn't recorded in table sessions. Neither Manual End by Candidate or Finish interview session candidate_id still null.
@@ -30,6 +37,20 @@ web sent token using websocket message and decode at api side
 
 **Solutions:**
 Add confirmation dialog
+
+## P1 - Web - accessing complete interview session is glitching with "idle" phase
+
+**Issue:** it should idle phase before showing completed phase
+
+**Solutions:**
+change initial session session from idle into null
+
+## P2 - Web - accessing invalid invite token still showing complete message
+
+**Issue:** api return 404, but rendered interview complete
+
+**Solutions:**
+return error state
 
 ## P3 - Web - assessment and vacancy duplicate logic
 
@@ -54,13 +75,6 @@ I prefer option 1:
 
 1. Insert both users on seed process, or
 2. At very bottom of `seeds.rb` add comment to peform manual insert using console: `User.create!(email: 'admin@example.com', password: '****', role: 'admin')`
-
-## P0 - API and Web - Signup page unavailable
-
-Signup page is available under /web/src/pages/auth/SignupPage. Need to:
-
-1. Add `/signup` into App.tsx
-2. Implement backend
 
 # TODO
 
