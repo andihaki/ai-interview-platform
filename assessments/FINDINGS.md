@@ -55,6 +55,8 @@ Signup page is available under /web/src/pages/auth/SignupPage. Need to:
 
 # TODO
 
+## P0 - Security - Password sent as plain text
+
 ## P3 - Web - Edit and Add shared component
 
 **Issue:** Edit add Add has idential UI but have two separate component
