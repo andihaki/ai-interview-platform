@@ -24,6 +24,13 @@ I prefer option 1, because decentralize the lookup load into client side:
 **Solutions:**
 web sent token using websocket message and decode at api side
 
+## P0 - Web - Cancel confirmation dialog before navigate
+
+**Issue:** stress full when user already type some data, accidently cancel it
+
+**Solutions:**
+Add confirmation dialog
+
 ## P3 - Web - assessment and vacancy duplicate logic
 
 **Issue:** assessment and vacancy duplicate logic between new and edit page

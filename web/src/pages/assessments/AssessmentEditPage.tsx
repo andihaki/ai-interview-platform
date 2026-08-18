@@ -34,13 +34,16 @@ import SkillPicker from "@/components/assessment/SkillPicker";
 
 import { TIME_LIMIT_OPTIONS } from "@/utils/constants";
 import useAssessment from "./hooks/useAssessment";
+import { UnsavedConfirmationDialog } from "@/components/ui/unsaved-comfirmation-dialog";
 
 export default function AssessmentEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
-  const { loading, errorResponse, onSubmit, ...form } = useAssessment();
+  const { loading, errorResponse, onSubmit, hasUnsavedChanges, ...form } =
+    useAssessment();
   const {
     register,
     handleSubmit,
@@ -203,7 +206,13 @@ export default function AssessmentEditPage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate(`/assessments/${id}/invite`)}
+            onClick={() => {
+              if (hasUnsavedChanges) {
+                setCancelDialogOpen(true);
+                return;
+              }
+              navigate(`/assessments/${id}/invite`);
+            }}
           >
             Cancel
           </Button>
@@ -218,6 +227,12 @@ export default function AssessmentEditPage() {
         open={pickerOpen}
         onOpenChange={setPickerOpen}
         onSelect={(s) => append({ ...s, display_order: fields.length })}
+      />
+
+      <UnsavedConfirmationDialog
+        onConfirm={() => navigate("/assessments")}
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
       />
     </div>
   );

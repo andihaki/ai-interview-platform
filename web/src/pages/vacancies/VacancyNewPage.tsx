@@ -11,10 +11,12 @@ import { Separator } from "@/components/ui/separator";
 import LevelRadio from "@/components/assessment/LevelRadio";
 import SkillPicker from "@/components/assessment/SkillPicker";
 import useVacancy from "./hooks/useVacancy";
+import { UnsavedConfirmationDialog } from "@/components/ui/unsaved-comfirmation-dialog";
 
 export default function VacancyNewPage() {
   const navigate = useNavigate();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   const {
     register,
@@ -27,6 +29,7 @@ export default function VacancyNewPage() {
     onSubmit,
     submitting,
     errorResponse,
+    hasUnsavedChanges,
   } = useVacancy();
 
   const { fields, append, remove } = useFieldArray({ control, name: "skills" });
@@ -168,7 +171,13 @@ export default function VacancyNewPage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate("/vacancies")}
+            onClick={() => {
+              if (hasUnsavedChanges) {
+                setCancelDialogOpen(true);
+                return;
+              }
+              navigate("/vacancies");
+            }}
           >
             Cancel
           </Button>
@@ -190,6 +199,12 @@ export default function VacancyNewPage() {
           });
           clearErrors("skills");
         }}
+      />
+
+      <UnsavedConfirmationDialog
+        onConfirm={() => navigate("/assessments")}
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
       />
     </div>
   );

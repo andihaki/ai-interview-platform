@@ -33,12 +33,15 @@ import { ArrowLeft, Plus, Loader2 } from "lucide-react";
 import { TIME_LIMIT_OPTIONS } from "@/utils/constants";
 import type { AssessmentSkill } from "@/types";
 import useAssessment from "./hooks/useAssessment";
+import { UnsavedConfirmationDialog } from "@/components/ui/unsaved-comfirmation-dialog";
 
 export default function AssessmentNewPage() {
   const navigate = useNavigate();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
-  const { loading, errorResponse, onSubmit, ...form } = useAssessment();
+  const { loading, errorResponse, onSubmit, hasUnsavedChanges, ...form } =
+    useAssessment();
   const {
     register,
     handleSubmit,
@@ -224,7 +227,13 @@ export default function AssessmentNewPage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate("/assessments")}
+            onClick={() => {
+              if (hasUnsavedChanges) {
+                setCancelDialogOpen(true);
+                return;
+              }
+              navigate("/assessments");
+            }}
           >
             Cancel
           </Button>
@@ -239,6 +248,12 @@ export default function AssessmentNewPage() {
         open={pickerOpen}
         onOpenChange={setPickerOpen}
         onSelect={addB7Skill}
+      />
+
+      <UnsavedConfirmationDialog
+        onConfirm={() => navigate("/assessments")}
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
       />
     </div>
   );
