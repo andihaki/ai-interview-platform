@@ -35,11 +35,6 @@ describe("AssesmentInvitePage", () => {
 
     const emptyState = await screen.findByText(/No candidates yet/i);
     expect(emptyState).toBeDefined();
-
-    // const btnCreateFirst = screen.getByRole("button", {
-    //     name: /Create your first assessment/i,
-    // });
-    // expect(btnCreateFirst).toBeDefined();
   });
 
   it("invite candidates", async () => {

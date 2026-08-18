@@ -74,23 +74,5 @@ describe("Fit/Gap Report Page", () => {
         new RegExp(FIT_GAP_RESULT_LABELS[firstSkill.result], "i"),
       ),
     ).toBeInTheDocument();
-
-    // const btnRunAnalysis = screen.getByRole("button", {
-    //   name: /Run Fit\/Gap Analysis/i,
-    // });
-    // expect(btnRunAnalysis).toBeDisabled();
-
-    // const vacancyDropdown = screen.getByRole("combobox");
-    // await userEvent.click(vacancyDropdown);
-    // const [_, vacancy] = MOCK_FITGAP.vacancies;
-    // const vacancyOption = await screen.findByRole("option", {
-    //   name: vacancy.role_title,
-    // });
-    // await userEvent.click(vacancyOption);
-    // expect(vacancyDropdown).toHaveTextContent(vacancy.role_title);
-    // expect(btnRunAnalysis).toBeEnabled();
-
-    // fireEvent.click(btnRunAnalysis);
-    // expect(await screen.findByText("Dummy Fit/Gap")).toBeInTheDocument();
   });
 });
