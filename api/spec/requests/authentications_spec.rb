@@ -52,6 +52,18 @@ RSpec.describe "Authentications", type: :request do
         expect(json_response['user']['role']).to eq('admin')
       end
 
+      it "returns successful response for user role" do
+        user_credentials = { email: 'user@test.com', password: 'password123' }
+        post "/api/v1/auth/login", params: user_credentials.to_json, headers: headers
+
+        expect(response).to have_http_status(:ok)
+
+        json_response = JSON.parse(response.body)
+        expect(json_response).to have_key('token')
+        expect(json_response['user']['email']).to eq('user@test.com')
+        expect(json_response['user']['role']).to eq('user')
+      end
+
       it "returns valid JWT token structure" do
         post "/api/v1/auth/login", params: valid_credentials.to_json, headers: headers
 
@@ -105,14 +117,14 @@ RSpec.describe "Authentications", type: :request do
         expect(json_response['errors'][0]['message']).to eq('Invalid email or password')
       end
 
-      it "returns unauthorized response for non-admin user" do
+      it "returns successful response for non-admin user" do
         non_admin_credentials = { email: 'user@test.com', password: 'password123' }
         post "/api/v1/auth/login", params: non_admin_credentials.to_json, headers: headers
 
-        expect(response).to have_http_status(:unauthorized)
+        expect(response).to have_http_status(:ok)
 
         json_response = JSON.parse(response.body)
-        expect(json_response['errors'][0]['message']).to eq('Invalid email or password')
+        expect(json_response['user']['role']).to eq('user')
       end
     end
 
