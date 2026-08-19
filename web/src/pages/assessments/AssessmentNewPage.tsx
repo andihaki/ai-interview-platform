@@ -49,6 +49,7 @@ export default function AssessmentNewPage() {
     setValue,
     formState: { errors },
     submitting,
+    clearErrors,
   } = form;
   const { fields, append, remove, move } = useFieldArray({
     control,
@@ -208,7 +209,10 @@ export default function AssessmentNewPage() {
               type="button"
               variant="outline"
               size="sm"
-              onClick={addCustomSkill}
+              onClick={() => {
+                addCustomSkill();
+                clearErrors("skills");
+              }}
             >
               <Plus className="h-3.5 w-3.5 mr-1" />
               Add custom skill
@@ -247,7 +251,10 @@ export default function AssessmentNewPage() {
       <SkillPicker
         open={pickerOpen}
         onOpenChange={setPickerOpen}
-        onSelect={addB7Skill}
+        onSelect={(skill) => {
+          addB7Skill(skill);
+          clearErrors("skills");
+        }}
       />
 
       <UnsavedConfirmationDialog
