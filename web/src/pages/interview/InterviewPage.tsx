@@ -132,7 +132,22 @@ export default function InterviewPage() {
   const handleTranscript = useCallback(
     (turn: Pick<TranscriptTurn, "speaker" | "text">) => {
       setIsStale(false);
-      setTranscript((prev) => [...prev.slice(-9), turn]); // keep last 10
+      setTranscript((prev) => {
+        const lastTurn = prev[prev.length - 1];
+
+        // If the last turn is from the same speaker, append the text
+        if (lastTurn && lastTurn.speaker === turn.speaker) {
+          const updatedPrev = [...prev];
+          updatedPrev[updatedPrev.length - 1] = {
+            ...lastTurn,
+            text: lastTurn.text + turn.text + " ",
+          };
+          return updatedPrev.slice(-9); // keep last 10
+        } else {
+          // Different speaker, create a new turn
+          return [...prev.slice(-9), turn]; // keep last 10
+        }
+      });
     },
     [],
   );

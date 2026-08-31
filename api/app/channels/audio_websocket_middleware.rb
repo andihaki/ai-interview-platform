@@ -141,6 +141,8 @@ class AudioWebSocketMiddleware
       on_audio: build_on_audio(browser_ws, state),
       on_input_transcription: build_on_input_transcription(browser_ws, state, session),
       on_output_transcription: build_on_output_transcription(browser_ws, state, session),
+      on_input_transcription_partial: build_on_input_transcription_partial(browser_ws),
+      on_output_transcription_partial: build_on_output_transcription_partial(browser_ws),
       on_model_turn_complete: build_on_model_turn_complete(browser_ws, state, session),
       on_go_away: ->(time_left:, resumption_token:) { handle_go_away(browser_ws, state, resumption_token) },
       on_close: ->(code:, reason:) { handle_gemini_close(browser_ws, state, code: code, reason: reason) },
@@ -191,10 +193,18 @@ class AudioWebSocketMiddleware
         Rails.logger.error("[AudioWS] Thread crashed (input transcription): #{e.class}: #{e.message}")
       end
 
-      send_json(browser_ws, type: 'transcription', speaker: 'candidate',
-                            text: text, turn_number: turn_number)
+      # Complete transcription no longer sent to client - partial callbacks handle real-time streaming
 
       check_time_ceiling(session, state, browser_ws)
+    }
+  end
+
+  # Streams partial candidate transcriptions to client in real-time without DB writes or turn incrementing
+  def build_on_input_transcription_partial(browser_ws)
+    lambda { |text|
+      next unless text.present?
+
+      send_json(browser_ws, type: 'transcription', speaker: 'candidate', text: text)
     }
   end
 
@@ -239,8 +249,7 @@ class AudioWebSocketMiddleware
         Rails.logger.error("[AudioWS] Thread crashed (output transcription): #{e.class}: #{e.message}")
       end
 
-      send_json(browser_ws, type: 'transcription', speaker: 'ai',
-                            text: text, turn_number: turn_number)
+      # Complete transcription no longer sent to client - partial callbacks handle real-time streaming
 
       # Track whether the AI's last turn ended with a question — drives wrap-up branching.
       state.last_ai_turn_ends_with_question = text.rstrip.end_with?('?')
@@ -265,6 +274,18 @@ class AudioWebSocketMiddleware
       end
 
       check_time_ceiling(session, state, browser_ws)
+    }
+  end
+
+  # Streams partial AI transcriptions to client in real-time without DB writes or turn incrementing
+  def build_on_output_transcription_partial(browser_ws)
+    lambda { |text|
+      next unless text.present?
+
+      text = sanitize_output_transcription(text)
+      next unless text.present?
+
+      send_json(browser_ws, type: 'transcription', speaker: 'ai', text: text)
     }
   end
 
